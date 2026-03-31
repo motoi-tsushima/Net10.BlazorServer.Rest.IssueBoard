@@ -1,0 +1,101 @@
+@page "/issues/{Id:int}/delete"
+@inject IssueService IssueService
+@inject NavigationManager Navigation
+
+<PageTitle>課題削除確認</PageTitle>
+
+<h3>課題削除確認</h3>
+
+@if (_isLoading)
+{
+    <p>読み込み中...</p>
+}
+else if (_issue is null)
+{
+    <div class="alert alert-danger">課題が見つかりません。</div>
+    <button class="btn btn-secondary" @onclick="NavigateToList">一覧へ戻る</button>
+}
+else
+{
+    <div class="alert alert-warning">この課題を削除してもよろしいですか？</div>
+
+    <dl class="row">
+        <dt class="col-sm-3">記入者氏名</dt>
+        <dd class="col-sm-9">@_issue.AuthorName</dd>
+
+        <dt class="col-sm-3">登録日時</dt>
+        <dd class="col-sm-9">@_issue.CreatedAt.ToString("yyyy/MM/dd HH:mm:ss")</dd>
+
+        <dt class="col-sm-3">カテゴリ名</dt>
+        <dd class="col-sm-9">@_issue.Category</dd>
+
+        <dt class="col-sm-3">課題タイトル</dt>
+        <dd class="col-sm-9">@_issue.Title</dd>
+
+        <dt class="col-sm-3">課題の文面</dt>
+        <dd class="col-sm-9" style="white-space:pre-wrap">@_issue.Description</dd>
+
+        <dt class="col-sm-3">現在の状況</dt>
+        <dd class="col-sm-9">@_issue.Status.ToDisplayName()</dd>
+
+        <dt class="col-sm-3">解決の文面</dt>
+        <dd class="col-sm-9" style="white-space:pre-wrap">@_issue.Resolution</dd>
+
+        <dt class="col-sm-3">解決担当者名</dt>
+        <dd class="col-sm-9">@_issue.ResolverName</dd>
+
+        <dt class="col-sm-3">最終結果日時</dt>
+        <dd class="col-sm-9">@_issue.ResolvedAt?.ToString("yyyy/MM/dd HH:mm:ss")</dd>
+    </dl>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert alert-danger">@_errorMessage</div>
+    }
+
+    <div class="mt-3">
+        <button class="btn btn-danger me-2" @onclick="ConfirmDelete">削除</button>
+        <button class="btn btn-secondary" @onclick="NavigateToDetail">戻る</button>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private IssueDto? _issue;
+    private bool _isLoading = true;
+    private string? _errorMessage;
+
+    private void NavigateToList() => Navigation.NavigateTo("/issues");
+    private void NavigateToDetail() => Navigation.NavigateTo($"/issues/{Id}");
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _issue = await IssueService.GetIssueAsync(Id);
+        }
+        catch
+        {
+            _errorMessage = "データの取得中にエラーが発生しました。";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task ConfirmDelete()
+    {
+        _errorMessage = null;
+        try
+        {
+            await IssueService.DeleteIssueAsync(Id);
+            NavigateToList();
+        }
+        catch
+        {
+            _errorMessage = "削除中にエラーが発生しました。";
+        }
+    }
+}

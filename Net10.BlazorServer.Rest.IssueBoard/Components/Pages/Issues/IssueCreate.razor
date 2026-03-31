@@ -1,0 +1,90 @@
+@page "/issues/create"
+@inject IssueService IssueService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>課題新規登録</PageTitle>
+
+<h3>課題新規登録</h3>
+
+<EditForm Model="_model" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+
+    <div class="mb-3 row">
+        <label class="col-sm-3 col-form-label">記入者氏名 <span class="text-danger">*</span></label>
+        <div class="col-sm-9">
+            <InputText class="form-control" @bind-Value="_model.AuthorName" />
+            <ValidationMessage For="() => _model.AuthorName" />
+        </div>
+    </div>
+
+    <div class="mb-3 row">
+        <label class="col-sm-3 col-form-label">カテゴリ名</label>
+        <div class="col-sm-9">
+            <InputText class="form-control" @bind-Value="_model.Category" />
+            <ValidationMessage For="() => _model.Category" />
+        </div>
+    </div>
+
+    <div class="mb-3 row">
+        <label class="col-sm-3 col-form-label">課題タイトル <span class="text-danger">*</span></label>
+        <div class="col-sm-9">
+            <InputText class="form-control" @bind-Value="_model.Title" />
+            <ValidationMessage For="() => _model.Title" />
+        </div>
+    </div>
+
+    <div class="mb-3 row">
+        <label class="col-sm-3 col-form-label">課題の文面 <span class="text-danger">*</span></label>
+        <div class="col-sm-9">
+            <InputTextArea class="form-control" rows="5" @bind-Value="_model.Description" />
+            <ValidationMessage For="() => _model.Description" />
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert alert-danger">@_errorMessage</div>
+    }
+
+    <div class="mt-3">
+        <button type="submit" class="btn btn-primary me-2">登録</button>
+        <button type="button" class="btn btn-secondary" @onclick="NavigateToList">戻る</button>
+    </div>
+</EditForm>
+
+@code {
+    private CreateIssueDto _model = new();
+    private string? _errorMessage;
+    private const string AuthorNameKey = "authorName";
+
+    private void NavigateToList() => Navigation.NavigateTo("/issues");
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var savedName = await JSRuntime.InvokeAsync<string?>("localStorage.getItem", AuthorNameKey);
+            if (!string.IsNullOrEmpty(savedName))
+            {
+                _model.AuthorName = savedName;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        _errorMessage = null;
+        try
+        {
+            await IssueService.CreateIssueAsync(_model);
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", AuthorNameKey, _model.AuthorName);
+            NavigateToList();
+        }
+        catch
+        {
+            _errorMessage = "登録中にエラーが発生しました。";
+        }
+    }
+}

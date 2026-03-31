@@ -1,0 +1,79 @@
+@page "/"
+@page "/issues"
+@inject IssueService IssueService
+@inject NavigationManager Navigation
+
+<PageTitle>課題一覧</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">課題一覧</h3>
+    <button class="btn btn-primary" @onclick="NavigateToCreate">課題登録</button>
+</div>
+
+@if (_isLoading)
+{
+    <p>読み込み中...</p>
+}
+else if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="alert alert-danger">@_errorMessage</div>
+}
+else if (_issues.Count == 0)
+{
+    <p>課題がありません。</p>
+}
+else
+{
+    <table class="table table-hover table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>記入者氏名</th>
+                <th>登録日時</th>
+                <th>カテゴリ名</th>
+                <th>課題タイトル</th>
+                <th>現在の状況</th>
+                <th>解決担当者名</th>
+                <th>最終結果日時</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var issue in _issues)
+            {
+                <tr style="cursor:pointer" @onclick="() => NavigateToDetail(issue.Id)">
+                    <td>@issue.AuthorName</td>
+                    <td>@issue.CreatedAt.ToString("yyyy/MM/dd HH:mm")</td>
+                    <td>@issue.Category</td>
+                    <td>@issue.Title</td>
+                    <td>@issue.Status.ToDisplayName()</td>
+                    <td>@issue.ResolverName</td>
+                    <td>@issue.ResolvedAt?.ToString("yyyy/MM/dd HH:mm")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<IssueDto> _issues = [];
+    private bool _isLoading = true;
+    private string? _errorMessage;
+
+    private void NavigateToCreate() => Navigation.NavigateTo("/issues/create");
+    private void NavigateToDetail(int id) => Navigation.NavigateTo($"/issues/{id}");
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _issues = await IssueService.GetIssuesAsync();
+        }
+        catch
+        {
+            _errorMessage = "データの取得中にエラーが発生しました。";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}

@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Api.Rest.IssueBoard/Api.Rest.IssueBoard.csproj" />
+  <Project Path="Net10.BlazorServer.Rest.IssueBoard/Net10.BlazorServer.Rest.IssueBoard.csproj" />
+  <Project Path="Shared.Rest.IssueBoard/Shared.Rest.IssueBoard.csproj" Id="0fe82f87-5dc1-44a1-870e-345c5cace3b2" />
+</Solution>
